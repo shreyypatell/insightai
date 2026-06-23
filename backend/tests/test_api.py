@@ -31,11 +31,13 @@ def client():
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-SAMPLE_CSV = (
-    b"age,salary,target\n"
-    b"25,50000,0\n30,60000,1\n35,70000,0\n"
-    b"40,80000,1\n45,90000,0\n50,100000,1\n"
-)
+def _make_csv(n=50):
+    lines = ["age,salary,target"]
+    for i in range(n):
+        lines.append(f"{20 + i},{30000 + i * 500},{i % 2}")
+    return "\n".join(lines).encode()
+
+SAMPLE_CSV = _make_csv(50)
 
 
 def register_and_login(client) -> dict:
@@ -80,7 +82,7 @@ def test_upload_and_list_datasets(client):
     r = client.post("/api/datasets/upload", files=files, headers=headers)
     assert r.status_code == 201
     data = r.json()
-    assert data["n_rows"] == 6
+    assert data["n_rows"] == 50
     assert data["n_columns"] == 3
 
     r2 = client.get("/api/datasets", headers=headers)
