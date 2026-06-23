@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  # ── FastAPI backend ────────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: insightai-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:///./insightai.db
+      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:80
+      - UPLOAD_DIR=storage/uploads
+      - MODEL_DIR=storage/models
+    volumes:
+      # Persist the SQLite database and uploaded files between container restarts
+      - backend_data:/app/storage
+      - ./backend/insightai.db:/app/insightai.db
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── React frontend (nginx) ─────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: insightai-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
